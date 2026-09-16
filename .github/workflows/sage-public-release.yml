@@ -1,0 +1,96 @@
+name: SAGE Nexus Public Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/sage-public-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: sage-nexus-public-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Acquire short-lived SAGE identity
+        id: oidc
+        shell: bash
+        run: |
+          set -euo pipefail
+          token_json="$(curl -fsS \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sage-nexus-public-browser")"
+          oidc_token="$(jq -r '.value' <<<"${token_json}")"
+          test -n "${oidc_token}"
+          test "${oidc_token}" != "null"
+          echo "token=${oidc_token}" >> "${GITHUB_OUTPUT}"
+
+      - name: Pull exact certified browser artifact from SAGE
+        shell: bash
+        env:
+          SAGE_TOKEN: ${{ steps.oidc.outputs.token }}
+          SAGE_BROKER: https://yruaygqlsyecefrassqc.supabase.co/functions/v1/sage-public-browser-artifact-broker
+          SOURCE_SHA: 3dddf5f07c915d0040f0c32eed25098d5d967ef5
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/site
+          mkdir -p /tmp/site
+
+          read_file() {
+            local name="$1"
+            local out="$2"
+            local payload response expected actual
+            payload="$(jq -cn --arg sha "${SOURCE_SHA}" --arg filename "${name}" '{op:"read",source_sha:$sha,filename:$filename}')"
+            response="$(curl -fsS -X POST "${SAGE_BROKER}" \
+              -H "Authorization: Bearer ${SAGE_TOKEN}" \
+              -H 'Content-Type: application/json' \
+              --data-binary "${payload}")"
+            jq -r '.content_base64' <<<"${response}" | base64 -d > "${out}"
+            expected="$(jq -r '.sha256' <<<"${response}")"
+            actual="$(sha256sum "${out}" | awk '{print $1}')"
+            test "${actual}" = "${expected}"
+          }
+
+          read_file MANIFEST /tmp/site/MANIFEST
+          while IFS= read -r name; do
+            test -n "${name}" || continue
+            test "${name}" = "MANIFEST" && continue
+            read_file "${name}" "/tmp/site/${name}"
+          done < /tmp/site/MANIFEST
+          read_file SHA256SUMS /tmp/site/SHA256SUMS
+
+          test "$(cat /tmp/site/SOURCE_SHA)" = "${SOURCE_SHA}"
+          test "$(cat /tmp/site/BROWSER_CONTRACT)" = 'sage.nexus.browser.public.v1'
+          test "$(cat /tmp/site/PUBLIC_DEPLOYMENT_REPOSITORY)" = 'mcchu8-lp.github.io'
+          test -f /tmp/site/index.html
+          test -f /tmp/site/nexus.js
+          test -f /tmp/site/.nojekyll
+
+          sed 's#dist/browser/##g' /tmp/site/SHA256SUMS > /tmp/browser-sums
+          (cd /tmp/site && sha256sum -c /tmp/browser-sums)
+          ! grep -R -E 'sb_secret_|SUPABASE_SERVICE_ROLE_KEY|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY' /tmp/site
+          ! grep -R -E 'postgres(ql)?://|DATABASE_URL=|SUPABASE_DB_PASSWORD' /tmp/site
+          for f in /tmp/site/*.js; do node --check "$f"; done
+
+      - name: Publish verified browser files to public main
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name .github -exec rm -rf {} +
+          cp -a /tmp/site/. .
+          git config user.name 'SAGE Release Bot'
+          git config user.email 'sage-release@users.noreply.github.com'
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m 'Publish certified SAGE Nexus browser artifact 3dddf5f0'
+          git push origin HEAD:main
