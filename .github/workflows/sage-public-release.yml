@@ -117,3 +117,31 @@ jobs:
       - name: Deploy verified SAGE browser artifact
         id: deployment
         uses: actions/deploy-pages@v4
+
+  verify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Certify live Nexus HTTP surface
+        shell: bash
+        env:
+          SITE: https://mcchu8-lp.github.io
+          SOURCE_SHA: 3dddf5f07c915d0040f0c32eed25098d5d967ef5
+        run: |
+          set -euo pipefail
+          curl --retry 12 --retry-delay 5 --retry-all-errors -fsSL -D /tmp/index.headers "${SITE}/" -o /tmp/index.html
+          grep -Eqi '^content-type:[[:space:]]*text/html' /tmp/index.headers
+          grep -q 'NEXUS' /tmp/index.html
+
+          live_sha="$(curl --retry 12 --retry-delay 5 --retry-all-errors -fsSL "${SITE}/SOURCE_SHA" | tr -d '\r\n')"
+          test "${live_sha}" = "${SOURCE_SHA}"
+
+          curl --retry 12 --retry-delay 5 --retry-all-errors -fsSL -D /tmp/js.headers "${SITE}/nexus.js" -o /tmp/nexus.js
+          grep -Eqi '^content-type:.*(javascript|text/plain)' /tmp/js.headers
+          grep -q 'window.Nexus' /tmp/nexus.js
+
+          curl --retry 12 --retry-delay 5 --retry-all-errors -fsSL "${SITE}/login.html" -o /tmp/login.html
+          grep -qi '<html' /tmp/login.html
+
+          echo "LIVE_URL=${SITE}/"
+          echo "LIVE_SOURCE_SHA=${live_sha}"
