@@ -23,11 +23,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Reconstruct certified SAGE browser artifact
+      - name: Verify certified transport chunks
         shell: bash
         run: |
           set -euo pipefail
           test "$(find bundle -maxdepth 1 -name 'part-*.txt' | wc -l)" -eq 7
+          cat >/tmp/chunk-sums <<'SUMS'
+          10cd2b7d3f226740368960f8e0dbe2d9abd08673f8a39e6f5563c0c3df427fcc  bundle/part-00.txt
+          f888b2280ed7ab5c1395ed5ec329acfb87ce88bb93edb2961e716f4a796ffa54  bundle/part-01.txt
+          9f84a95bed9fce71a6e1686bd1ed22694f16bd0b7550c6f4a10f082f78a8266c  bundle/part-02.txt
+          61b22dfe32c7c9b10ab8c5b02dc4b66ae287aa921a55906d0ddd7b7e2d48474c  bundle/part-03.txt
+          dc8712f4f17ab41743025abe7b069b119ca79aee1462482ee9f86bda83aa47e7  bundle/part-04.txt
+          50fd258d8c310f6d1865811315c7052c124f4bd3079ab6f5c014e66476dd77a2  bundle/part-05.txt
+          0b7c3684509b19f897fbaf15b53ebe4f8f1441b3225bf24b8a4d45c208c79a79  bundle/part-06.txt
+          SUMS
+          sha256sum -c /tmp/chunk-sums
+
+      - name: Reconstruct certified SAGE browser artifact
+        shell: bash
+        run: |
+          set -euo pipefail
           cat bundle/part-*.txt | base64 -d > /tmp/sage-nexus-public-browser.zip
           echo '5f73c3fc5da661e14d13dfe0fc1a0745ade78acc8dfe64c172831ef274588990  /tmp/sage-nexus-public-browser.zip' | sha256sum -c -
           rm -rf /tmp/site
