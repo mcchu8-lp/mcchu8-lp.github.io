@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+  <meta name="theme-color" content="#05101a">
+  <title>Life Pursuits — Sign In</title>
+  <link rel="stylesheet" href="/app.css">
+  <style>
+    body{min-height:100vh;display:grid;place-items:center;padding:20px}.auth-card{width:min(100%,430px);background:#0b1926;border:1px solid #1e3548;border-radius:20px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+    .auth-card h1{margin:14px 0 6px;font-size:26px}.auth-card p{color:#8ea6ba;line-height:1.55;margin:0 0 18px}.field{display:grid;gap:7px;margin:14px 0}.field label{font-size:12px;color:#9fb4c5}.field input{width:100%;border:1px solid #284257;background:#071521;color:#f3f7fb;border-radius:11px;padding:13px 14px;font:inherit;outline:none}.field input:focus{border-color:#2f81f7}.auth-button{width:100%;border:0;border-radius:11px;padding:13px 14px;background:#1677ff;color:white;font-weight:750;font:inherit;cursor:pointer}.auth-button[disabled]{opacity:.55;cursor:wait}.secondary{margin-top:10px;background:#132536}.message{margin-top:14px;padding:11px 12px;border:1px solid #2c4658;border-radius:10px;color:#b9cad7;background:#091722;font-size:13px;line-height:1.4}.message.error{border-color:#6e2a33;color:#ff9ca3}.small{font-size:11px;color:#70889c;margin-top:14px;line-height:1.45}.brandrow{display:flex;align-items:center;gap:10px}.mini-mark{width:40px;height:40px;border-radius:11px;background:linear-gradient(145deg,#2f81f7,#0d3b66);display:grid;place-items:center;font-weight:800}
+  </style>
+</head>
+<body>
+<main class="auth-card">
+  <div class="brandrow"><div class="mini-mark">LP</div><div><strong>Life Pursuits</strong><div style="font-size:12px;color:#7891a5">Private Wealth Intelligence</div></div></div>
+  <h1>Secure sign in</h1>
+  <p>Use the email already enrolled with Life Pursuits. A one-time code will be sent to that address.</p>
+  <form id="sendForm">
+    <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" required></div>
+    <button id="sendBtn" class="auth-button" type="submit">Send one-time code</button>
+  </form>
+  <form id="verifyForm" hidden>
+    <div class="field"><label for="otp">6-digit code</label><input id="otp" inputmode="numeric" autocomplete="one-time-code" minlength="6" maxlength="8" required></div>
+    <button id="verifyBtn" class="auth-button" type="submit">Verify and continue</button>
+    <button id="backBtn" class="auth-button secondary" type="button">Use a different email</button>
+  </form>
+  <div id="message" class="message" hidden></div>
+  <div class="small">Sessions are kept only in this browser tab/session. Private portfolio data is released only after server-side household membership, principal binding and domain authorization checks.</div>
+</main>
+<script src="/auth.js"></script>
+<script src="/login.js"></script>
+</body>
+</html>

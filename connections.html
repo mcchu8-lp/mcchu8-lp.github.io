@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+  <meta name="theme-color" content="#05101a">
+  <title>Connections — Life Pursuits</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="brandmark">LP</div><div><div class="brand-title">Life Pursuits</div><div class="brand-sub">Wealth Intelligence</div></div></div>
+    <nav class="nav-list" aria-label="Primary">
+      <a class="nav-link" href="/"><span class="nav-icon">⌂</span>Dashboard</a>
+      <a class="nav-link" href="/" data-domain="wealth"><span class="nav-icon">◈</span>Investments</a>
+      <a class="nav-link" href="/approval-center.html"><span class="nav-icon">✉</span>Attention Center</a>
+      <a class="nav-link" href="/treasury-dashboard.html" data-domain="treasury"><span class="nav-icon">△</span>Treasury</a>
+      <a class="nav-link active" href="/connections.html"><span class="nav-icon">⇄</span>Connections</a>
+      <a class="nav-link" href="/health.html" data-domain="control"><span class="nav-icon">◇</span>System Health</a>
+    </nav>
+    <div class="sidebar-foot"><div class="identity"><div class="identity-name">Private integrations</div><div class="identity-meta">Secrets never stored in the browser</div></div></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div><div class="page-title">Connections & Integrations</div><div class="page-sub">Secure provider access for the Life Pursuits data fabric</div></div>
+      <div class="context"><span id="securityBadge" class="badge warn">Checking access…</span></div>
+    </header>
+
+    <main class="content narrow-content">
+      <div id="notice" class="notice" hidden></div>
+
+      <section class="card connection-hero">
+        <div>
+          <div class="eyebrow">CRYPTO ACCOUNT · BITRUE</div>
+          <h1 id="connectionName" class="connection-title">Bitrue read-only connection</h1>
+          <p class="connection-copy">Enter the <strong>new replacement</strong> API credential directly here. It is sent over your authenticated Life Pursuits session, stored encrypted in Supabase Vault, and is never written to browser storage or shown again.</p>
+        </div>
+        <div class="readonly-lock">READ ONLY</div>
+      </section>
+
+      <section class="section-grid connections-grid">
+        <article class="card">
+          <h2 class="section-title">Connection</h2>
+          <label class="field-label" for="connectionPicker">Bitrue account</label>
+          <select id="connectionPicker" class="form-control" aria-label="Bitrue account"></select>
+
+          <div class="connection-status-grid" aria-label="Connection status">
+            <div class="security-item"><div id="permissionState" class="connection-state warn">—</div><div class="l">Permission model</div></div>
+            <div class="security-item"><div id="authState" class="connection-state warn">—</div><div class="l">Authentication</div></div>
+            <div class="security-item"><div id="syncState" class="connection-state warn">—</div><div class="l">Sync state</div></div>
+            <div class="security-item"><div id="coverageState" class="connection-state warn">—</div><div class="l">Coverage</div></div>
+            <div class="security-item"><div id="healthState" class="connection-state warn">—</div><div class="l">Health</div></div>
+            <div class="security-item"><div id="credentialState" class="v">—</div><div class="l">Credential</div></div>
+          </div>
+
+          <div class="connection-meta-row"><span>Last successful refresh</span><strong id="lastRefresh">Not yet</strong></div>
+          <button id="refreshStatus" class="secondary-button" type="button">Refresh status</button>
+        </article>
+
+        <article class="card">
+          <h2 class="section-title">Encrypted API credential</h2>
+          <div class="safety-callout"><strong>Required Bitrue permissions:</strong> All Service → Read-Only only. Futures Orders/Positions, Account Transfer, Spot Trade and Wallet Withdrawal must remain disabled.</div>
+
+          <form id="credentialForm" class="credential-form" autocomplete="off" hidden>
+            <div class="field-group">
+              <label class="field-label" for="apiKey">API key</label>
+              <input id="apiKey" class="form-control" type="password" name="bitrue_api_key" autocomplete="new-password" autocapitalize="off" spellcheck="false" inputmode="text" required>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="apiSecret">Secret key</label>
+              <input id="apiSecret" class="form-control" type="password" name="bitrue_api_secret" autocomplete="new-password" autocapitalize="off" spellcheck="false" inputmode="text" required>
+            </div>
+            <p class="form-note">Do not paste the credential into chat. This form sends it directly to the secure backend and clears both fields after submission.</p>
+            <button id="saveCredentials" class="primary-button" type="submit">Store encrypted credential & validate</button>
+          </form>
+          <div id="emptyState" class="empty-state">Loading authorized Bitrue connections…</div>
+
+          <div class="validation-panel">
+            <div class="field-label">Live validation</div>
+            <div id="validationResult" class="validation-result">Not run yet</div>
+            <div class="form-note">Current Bitrue adapter validates Spot balances and holdings. Flexible/Earn coverage remains a later capability and is not treated as complete yet.</div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+</div>
+
+<nav class="mobile-nav" aria-label="Mobile navigation">
+  <a href="/"><span class="i">⌂</span>Home</a>
+  <a href="/" data-domain="wealth"><span class="i">◈</span>Invest</a>
+  <a href="/approval-center.html"><span class="i">✉</span>Attention</a>
+  <a href="/treasury-dashboard.html" data-domain="treasury"><span class="i">△</span>Treasury</a>
+  <a class="active" href="/connections.html"><span class="i">⇄</span>Connect</a>
+</nav>
+<script src="/auth.js"></script>
+<script src="/connections.js" defer></script>
+</body>
+</html>

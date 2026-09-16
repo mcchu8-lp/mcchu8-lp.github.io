@@ -1,0 +1,24 @@
+(()=>{
+  'use strict';
+  const $=id=>document.getElementById(id);
+  const defs={
+    'experience.ribbon.enabled':true,
+    'experience.ribbon.motion':'auto',
+    'experience.ribbon.intensity':'material',
+    'experience.ribbon.platform_events':true,
+    'experience.dashboard.density':'comfortable',
+    'experience.notifications.material_only':true,
+    'experience.default_workspace':'overview',
+    'experience.overview.mode':'balanced',
+    'experience.mobile.pin':'auto'
+  };
+  function notice(msg,kind='success'){const e=$('prefNotice');e.textContent=msg;e.className=`notice ${kind}`;e.hidden=false}
+  function availableDomains(b){return (b.domains||[]).filter(d=>!['core','experience'].includes(d.domain_key))}
+  function renderAccess(b){const e=$('domainAccess');if(!e)return;e.innerHTML=availableDomains(b).map(d=>{const m=Nexus.meta[d.domain_key]||{label:d.domain_name||d.domain_key,copy:'Authorized platform domain.',href:`/domain.html?domain=${encodeURIComponent(d.domain_key)}`};return `<a class="nexus-domain-card" href="${m.href}"><div><div class="domain-title">${Nexus.escapeHtml(m.label)}</div><div class="domain-copy">${Nexus.escapeHtml(m.copy)}</div></div><div class="domain-meta"><span><i class="nexus-state"></i>${Nexus.escapeHtml(d.access_level)}</span><span>Platform grant</span></div></a>`}).join('')}
+  function renderWorkspaceOptions(b){const domains=availableDomains(b).filter(d=>Nexus.meta[d.domain_key]);const options=['<option value="overview">Overview</option>',...domains.map(d=>`<option value="${Nexus.escapeHtml(d.domain_key)}">${Nexus.escapeHtml(Nexus.meta[d.domain_key].label)}</option>`)].join('');$('defaultWorkspace').innerHTML=options;$('mobilePin').innerHTML='<option value="auto">Automatic</option>'+domains.map(d=>`<option value="${Nexus.escapeHtml(d.domain_key)}">${Nexus.escapeHtml(Nexus.meta[d.domain_key].label)}</option>`).join('')}
+  function populate(){const p=Nexus.state.preferences||{};$('ribbonEnabled').checked=p['experience.ribbon.enabled']??defs['experience.ribbon.enabled'];$('ribbonMotion').value=p['experience.ribbon.motion']||defs['experience.ribbon.motion'];$('ribbonIntensity').value=p['experience.ribbon.intensity']||defs['experience.ribbon.intensity'];$('platformEvents').checked=p['experience.ribbon.platform_events']??defs['experience.ribbon.platform_events'];$('density').value=p['experience.dashboard.density']||defs['experience.dashboard.density'];$('materialOnly').checked=p['experience.notifications.material_only']??defs['experience.notifications.material_only'];$('defaultWorkspace').value=p['experience.default_workspace']||defs['experience.default_workspace'];$('overviewMode').value=p['experience.overview.mode']||defs['experience.overview.mode'];$('mobilePin').value=p['experience.mobile.pin']||defs['experience.mobile.pin']}
+  async function save(){const rows=[['experience.ribbon.enabled',$('ribbonEnabled').checked],['experience.ribbon.motion',$('ribbonMotion').value],['experience.ribbon.intensity',$('ribbonIntensity').value],['experience.ribbon.platform_events',$('platformEvents').checked],['experience.dashboard.density',$('density').value],['experience.notifications.material_only',$('materialOnly').checked],['experience.default_workspace',$('defaultWorkspace').value],['experience.overview.mode',$('overviewMode').value],['experience.mobile.pin',$('mobilePin').value]];for(const [k,v] of rows)await Nexus.savePreference(k,v);rows.forEach(([k,v])=>Nexus.state.preferences[k]=v);document.body.classList.toggle('nexus-compact',$('density').value==='compact');notice('Preferences saved. Nexus will apply them across authenticated views.')}
+  async function reset(){for(const [k,v] of Object.entries(defs))await Nexus.savePreference(k,v);Object.assign(Nexus.state.preferences,defs);populate();document.body.classList.remove('nexus-compact');notice('Nexus experience defaults restored.')}
+  async function start(){try{const b=await Nexus.start();renderWorkspaceOptions(b);populate();renderAccess(b);$('prefsForm').addEventListener('submit',async e=>{e.preventDefault();const btn=e.submitter;btn.disabled=true;try{await save()}catch(err){console.error(err);notice('Preference save failed. Existing settings remain unchanged.','warn')}finally{btn.disabled=false}});$('resetPrefs').onclick=async()=>{try{await reset()}catch(err){console.error(err);notice('Could not restore defaults.','warn')}}}catch(e){console.error(e);notice('Secure preference service unavailable. Sign in again if your session ended.','warn')}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start()
+})();
