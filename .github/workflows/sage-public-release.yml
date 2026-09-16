@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  pages: write
   id-token: write
 
 concurrency:
@@ -91,6 +92,28 @@ jobs:
           git config user.name 'SAGE Release Bot'
           git config user.email 'sage-release@users.noreply.github.com'
           git add -A
-          git diff --cached --quiet && exit 0
-          git commit -m 'Publish certified SAGE Nexus browser artifact 3dddf5f0'
-          git push origin HEAD:main
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish certified SAGE Nexus browser artifact 3dddf5f0'
+            git push origin HEAD:main
+          fi
+
+      - name: Upload verified Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/site
+
+  deploy:
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure public GitHub Pages transport
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Deploy verified SAGE browser artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
