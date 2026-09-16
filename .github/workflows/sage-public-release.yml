@@ -1,0 +1,86 @@
+name: SAGE Nexus Public Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/sage-public-release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: sage-nexus-public-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruct certified SAGE browser artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find bundle -maxdepth 1 -name 'part-*.txt' | wc -l)" -eq 7
+          cat bundle/part-*.txt | base64 -d > /tmp/sage-nexus-public-browser.zip
+          echo '5f73c3fc5da661e14d13dfe0fc1a0745ade78acc8dfe64c172831ef274588990  /tmp/sage-nexus-public-browser.zip' | sha256sum -c -
+          rm -rf /tmp/site
+          mkdir -p /tmp/site
+          unzip -q /tmp/sage-nexus-public-browser.zip -d /tmp/site
+
+      - name: Verify SAGE public browser contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat /tmp/site/SOURCE_SHA)" = 'fffb7d6c3fef52e91015343ac644df65b2929629'
+          test "$(cat /tmp/site/BROWSER_CONTRACT)" = 'sage.nexus.browser.public.v1'
+          test "$(cat /tmp/site/PUBLIC_DEPLOYMENT_REPOSITORY)" = 'mcchu8-lp.github.io'
+          sed 's#dist/browser/##g' /tmp/site/SHA256SUMS > /tmp/sage-browser-sums
+          (cd /tmp/site && sha256sum -c /tmp/sage-browser-sums)
+          ! grep -R -E 'sb_secret_|SUPABASE_SERVICE_ROLE_KEY|BEGIN (RSA|OPENSSH|EC) PRIVATE KEY' /tmp/site
+          test -f /tmp/site/index.html
+          test -f /tmp/site/nexus.js
+          for f in /tmp/site/*.js; do node --check "$f"; done
+
+      - name: Materialize certified browser release
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf bundle
+          rm -f sage-nexus-public-browser.zip.b64
+          cp -a /tmp/site/. .
+          touch .nojekyll
+          git config user.name 'SAGE Release Bot'
+          git config user.email 'sage-release@users.noreply.github.com'
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m 'Publish certified SAGE Nexus browser artifact fffb7d6c'
+            git push origin HEAD:main
+          fi
+
+      - name: Upload verified Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/site
+
+  deploy:
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure public GitHub Pages transport
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Deploy verified SAGE browser artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
